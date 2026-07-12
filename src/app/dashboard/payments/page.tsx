@@ -280,7 +280,7 @@ export default function PaymentRecordsPage() {
                     </td>
                     <td className="px-8 py-5">
                       <div className="flex items-center space-x-1 text-sm font-bold text-white font-mono">
-                        <span className="text-emerald-400">$</span>
+                        <span className="text-emerald-400">₦</span>
                         <span>{Number(payment.amount).toLocaleString()}</span>
                       </div>
                     </td>
@@ -383,7 +383,7 @@ export default function PaymentRecordsPage() {
 
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-blue-400 uppercase tracking-widest ml-1">Amount ($)</label>
+                    <label className="text-xs font-bold text-blue-400 uppercase tracking-widest ml-1">Amount (₦)</label>
                     <div className="relative">
                       <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400" size={18} />
                       <input
@@ -493,7 +493,7 @@ export default function PaymentRecordsPage() {
           <div className="text-center lg:text-left">
             <p className="text-[9px] lg:text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Received</p>
             <p className="text-xl lg:text-3xl font-bold text-white group-hover:text-emerald-400 transition-colors">
-              ${payments.reduce((sum, p) => sum + Number(p.amount), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              ₦{payments.reduce((sum, p) => sum + Number(p.amount), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </p>
           </div>
           <div className="hidden sm:block w-px h-12 bg-blue-500/20" />

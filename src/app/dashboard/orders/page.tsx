@@ -31,6 +31,12 @@ const FABRICS = [
   { value: "Velvet", label: "Velvet" },
 ];
 
+const ORDER_TYPES = [
+  { value: "Custom Orders", label: "Custom Orders" },
+  { value: "Alteration Orders", label: "Alteration Orders" },
+  { value: "Bulk Orders", label: "Bulk Orders" },
+];
+
 const STATUSES = ["Pending", "In Progress", "Completed", "Delivered"];
 
 export default function OrderManagementPage() {
@@ -51,8 +57,12 @@ export default function OrderManagementPage() {
     customer_id: "",
     description: "",
     fabric: "",
+    order_type: "Custom Orders",
     deadline: "",
     total_amount: "",
+    total_cost: "",
+    amount_paid: "",
+    balance_due: "",
     status: "Pending" as any
   });
 
@@ -75,8 +85,12 @@ export default function OrderManagementPage() {
         customer: o.customers?.full_name || 'Unknown',
         description: o.items?.[0]?.description || '',
         fabric: o.items?.[0]?.fabric || '',
+        order_type: o.order_type,
         deadline: o.deadline,
         total_amount: o.total_amount,
+        total_cost: o.total_cost,
+        amount_paid: o.amount_paid,
+        balance_due: o.balance_due,
         status: o.status
       }));
       setOrders(formattedOrders);
@@ -94,6 +108,9 @@ export default function OrderManagementPage() {
       order_number: isEditing ? currentOrder.order_number : `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
       customer_id: currentOrder.customer_id,
       total_amount: parseFloat(currentOrder.total_amount) || 0,
+      total_cost: parseFloat(currentOrder.total_cost) || 0,
+      amount_paid: parseFloat(currentOrder.amount_paid) || 0,
+      order_type: currentOrder.order_type,
       status: currentOrder.status,
       deadline: currentOrder.deadline,
       items: [{ description: currentOrder.description, fabric: currentOrder.fabric }]
@@ -125,8 +142,12 @@ export default function OrderManagementPage() {
       customer_id: "",
       description: "",
       fabric: "",
+      order_type: "Custom Orders",
       deadline: "",
       total_amount: "",
+      total_cost: "",
+      amount_paid: "",
+      balance_due: "",
       status: "Pending"
     });
   };
@@ -270,7 +291,9 @@ export default function OrderManagementPage() {
                   <th className="px-6 py-5 font-bold">Order Details</th>
                   <th className="px-6 py-5 font-bold">Client / Fabric</th>
                   <th className="px-6 py-5 font-bold">Delivery Date</th>
-                  <th className="px-6 py-5 font-bold">Amount</th>
+                  <th className="px-6 py-5 font-bold">Total Cost</th>
+                  <th className="px-6 py-5 font-bold">Amount Paid</th>
+                  <th className="px-6 py-5 font-bold">Balance Due</th>
                   <th className="px-6 py-5 font-bold">Status</th>
                   <th className="px-6 py-5 font-bold text-right">Actions</th>
                 </tr>
@@ -304,9 +327,18 @@ export default function OrderManagementPage() {
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        <div className="flex items-center space-x-1 text-sm font-bold text-cyan-400 font-mono">
-                          <DollarSign size={14} />
-                          <span>{Number(order.total_amount).toLocaleString()}</span>
+                        <div className="flex items-center space-x-1 text-sm font-bold text-slate-300 font-mono">
+                          <span>₦{Number(order.total_cost).toLocaleString()}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center space-x-1 text-sm font-bold text-emerald-400 font-mono">
+                          <span>₦{Number(order.amount_paid).toLocaleString()}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center space-x-1 text-sm font-bold font-mono" style={{color: Number(order.balance_due) > 0 ? '#f97316' : '#10b981'}}>
+                          <span>₦{Number(order.balance_due).toLocaleString()}</span>
                         </div>
                       </td>
                       <td className="px-6 py-5">
@@ -395,7 +427,7 @@ export default function OrderManagementPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="px-6 py-20 text-center text-slate-500">
+                      <td colSpan={8} className="px-6 py-20 text-center text-slate-500">
                       <div className="flex flex-col items-center">
                         <div className="p-4 rounded-full bg-slate-900/50 mb-4">
                           <Search size={32} />
@@ -414,16 +446,16 @@ export default function OrderManagementPage() {
 
       {/* Create Order Modal / Overlay */}
       {isCreating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setIsCreating(false)} />
           
-          <div className="relative w-full max-w-2xl glass-effect rounded-3xl border border-blue-500/20 overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="flex items-center justify-between p-8 border-b border-blue-500/10">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
-                  {isEditing ? <Edit size={24} /> : <Plus size={24} />}
+          <div className="relative w-full max-w-sm sm:max-w-md md:max-w-2xl glass-effect rounded-2xl sm:rounded-3xl border border-blue-500/20 overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 sm:p-6 lg:p-8 border-b border-blue-500/10 gap-2">
+              <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+                <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400 flex-shrink-0">
+                  {isEditing ? <Edit size={18} className="sm:w-6 sm:h-6" /> : <Plus size={18} className="sm:w-6 sm:h-6" />}
                 </div>
-                <h3 className="text-xl font-bold text-white">{isEditing ? `Edit Order ${currentOrder.id}` : 'Initialize New Order'}</h3>
+                <h3 className="text-sm sm:text-base lg:text-xl font-bold text-white truncate">{isEditing ? `Edit Order` : 'New Order'}</h3>
               </div>
               <button 
                 onClick={() => {
@@ -431,26 +463,26 @@ export default function OrderManagementPage() {
                   setIsEditing(false);
                   resetForm();
                 }}
-                className="p-2 rounded-full hover:bg-white/5 text-slate-500 hover:text-white transition-all"
+                className="p-2 rounded-full hover:bg-white/5 text-slate-500 hover:text-white transition-all flex-shrink-0"
               >
-                <X size={20} />
+                <X size={18} className="sm:w-5 sm:h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateOrder} className="p-8 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleCreateOrder} className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
                 {/* Customer */}
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-blue-400 uppercase tracking-widest">Select Client</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-blue-400">
-                      <User size={18} />
+                      <User size={16} className="sm:w-5 sm:h-5" />
                     </div>
                     <select
                       required
                       value={currentOrder.customer_id}
                       onChange={(e) => setCurrentOrder({...currentOrder, customer_id: e.target.value})}
-                      className="w-full bg-slate-900/50 border border-blue-500/20 rounded-xl py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/30 transition-all appearance-none"
+                      className="w-full bg-slate-900/50 border border-blue-500/20 rounded-xl py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 text-xs sm:text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/30 transition-all appearance-none"
                     >
                       <option value="" className="bg-slate-900">Select Customer</option>
                       {dbCustomers.map(c => (
@@ -465,17 +497,37 @@ export default function OrderManagementPage() {
                   <label className="text-xs font-bold text-blue-400 uppercase tracking-widest">Fabric Type</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-blue-400">
-                      <Scissors size={18} />
+                      <Scissors size={16} className="sm:w-5 sm:h-5" />
                     </div>
                     <select
                       required
                       value={currentOrder.fabric}
                       onChange={(e) => setCurrentOrder({...currentOrder, fabric: e.target.value})}
-                      className="w-full bg-slate-900/50 border border-blue-500/20 rounded-xl py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/30 transition-all appearance-none"
+                      className="w-full bg-slate-900/50 border border-blue-500/20 rounded-xl py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 text-xs sm:text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/30 transition-all appearance-none"
                     >
                       <option value="" className="bg-slate-900">Select Fabric</option>
                       {FABRICS.map(f => (
                         <option key={f.value} value={f.value} className="bg-slate-900">{f.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Order Type */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-blue-400 uppercase tracking-widest">Order Type</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-blue-400">
+                      <ShoppingBag size={16} className="sm:w-5 sm:h-5" />
+                    </div>
+                    <select
+                      required
+                      value={currentOrder.order_type}
+                      onChange={(e) => setCurrentOrder({...currentOrder, order_type: e.target.value})}
+                      className="w-full bg-slate-900/50 border border-blue-500/20 rounded-xl py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 text-xs sm:text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/30 transition-all appearance-none"
+                    >
+                      {ORDER_TYPES.map(ot => (
+                        <option key={ot.value} value={ot.value} className="bg-slate-900">{ot.label}</option>
                       ))}
                     </select>
                   </div>
@@ -486,34 +538,67 @@ export default function OrderManagementPage() {
                   <label className="text-xs font-bold text-blue-400 uppercase tracking-widest">Delivery Deadline</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-blue-400">
-                      <Calendar size={18} />
+                      <Calendar size={16} className="sm:w-5 sm:h-5" />
                     </div>
                     <input
                       required
                       type="date"
                       value={currentOrder.deadline}
                       onChange={(e) => setCurrentOrder({...currentOrder, deadline: e.target.value})}
-                      className="w-full bg-slate-900/50 border border-blue-500/20 rounded-xl py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/30 transition-all [color-scheme:dark]"
+                      className="w-full bg-slate-900/50 border border-blue-500/20 rounded-xl py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 text-xs sm:text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/30 transition-all [color-scheme:dark]"
                     />
                   </div>
                 </div>
 
-                {/* Amount */}
+                {/* Total Cost */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-blue-400 uppercase tracking-widest">Order Amount ($)</label>
+                  <label className="text-xs font-bold text-blue-400 uppercase tracking-widest">Total Cost (₦)</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-blue-400">
-                      <DollarSign size={18} />
+                      <DollarSign size={16} className="sm:w-5 sm:h-5" />
                     </div>
                     <input
                       required
                       type="number"
                       placeholder="0.00"
-                      value={currentOrder.total_amount}
-                      onChange={(e) => setCurrentOrder({...currentOrder, total_amount: e.target.value})}
-                      className="w-full bg-slate-900/50 border border-blue-500/20 rounded-xl py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/30 transition-all"
+                      value={currentOrder.total_cost}
+                      onChange={(e) => setCurrentOrder({...currentOrder, total_cost: e.target.value})}
+                      className="w-full bg-slate-900/50 border border-blue-500/20 rounded-xl py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 text-xs sm:text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/30 transition-all"
                     />
                   </div>
+                </div>
+
+                {/* Amount Paid */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-blue-400 uppercase tracking-widest">Amount Paid (₦)</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-blue-400">
+                      <DollarSign size={16} className="sm:w-5 sm:h-5" />
+                    </div>
+                    <input
+                      type="number"
+                      placeholder="0.00"
+                      value={currentOrder.amount_paid}
+                      onChange={(e) => setCurrentOrder({...currentOrder, amount_paid: e.target.value})}
+                      className="w-full bg-slate-900/50 border border-blue-500/20 rounded-xl py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 text-xs sm:text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/30 transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Balance Due (Read-only) */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-blue-400 uppercase tracking-widest">Balance Due (₦)</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-blue-400">
+                    <DollarSign size={16} className="sm:w-5 sm:h-5" />
+                  </div>
+                  <input
+                    type="number"
+                    disabled
+                    value={Math.max(0, (parseFloat(currentOrder.total_cost) || 0) - (parseFloat(currentOrder.amount_paid) || 0))}
+                    className="w-full bg-slate-900/30 border border-blue-500/10 rounded-xl py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 text-xs sm:text-sm text-slate-400 cursor-not-allowed"
+                  />
                 </div>
               </div>
 
@@ -522,31 +607,32 @@ export default function OrderManagementPage() {
                 <label className="text-xs font-bold text-blue-400 uppercase tracking-widest">Design Description</label>
                 <div className="relative">
                   <div className="absolute top-3 left-3 pointer-events-none text-blue-400">
-                    <FileText size={18} />
+                    <FileText size={16} className="sm:w-5 sm:h-5" />
                   </div>
                   <textarea
                     required
-                    rows={4}
+                    rows={3}
                     placeholder="Describe the design specifics, measurements, and any special requests..."
                     value={currentOrder.description}
                     onChange={(e) => setCurrentOrder({...currentOrder, description: e.target.value})}
-                    className="w-full bg-slate-900/50 border border-blue-500/20 rounded-xl py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/30 transition-all resize-none"
+                    className="w-full bg-slate-900/50 border border-blue-500/20 rounded-xl py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 text-xs sm:text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/30 transition-all resize-none"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center space-x-4 pt-4">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 sm:pt-4">
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="flex-1 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] transition-all flex items-center justify-center space-x-2 disabled:opacity-70"
+                  className="flex-1 py-2.5 sm:py-3 lg:py-4 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold text-xs sm:text-sm shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] transition-all flex items-center justify-center space-x-2 disabled:opacity-70"
                 >
                   {isSaving ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     <>
-                      <Save size={20} />
-                      <span>{isEditing ? 'Save Changes' : 'Confirm & Create Order'}</span>
+                      <Save size={16} className="sm:w-5 sm:h-5" />
+                      <span className="hidden sm:inline">{isEditing ? 'Save Changes' : 'Confirm & Create'}</span>
+                      <span className="sm:hidden">{isEditing ? 'Save' : 'Create'}</span>
                     </>
                   )}
                 </button>
@@ -557,7 +643,7 @@ export default function OrderManagementPage() {
                     setIsEditing(false);
                     resetForm();
                   }}
-                  className="px-8 py-4 rounded-xl border border-slate-700 text-slate-400 font-bold hover:bg-slate-800 hover:text-white transition-all"
+                  className="px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 lg:py-4 rounded-xl border border-slate-700 text-slate-400 font-bold text-xs sm:text-sm hover:bg-slate-800 hover:text-white transition-all"
                 >
                   Cancel
                 </button>

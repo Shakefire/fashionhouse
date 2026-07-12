@@ -24,7 +24,7 @@ export default function DashboardPage() {
     { label: "Total Customers", value: "0", icon: Users, color: "text-blue-400", bg: "bg-blue-400/10" },
     { label: "Measurements Recorded", value: "0", icon: Ruler, color: "text-purple-400", bg: "bg-purple-400/10" },
     { label: "Active Orders", value: "0", icon: ShoppingBag, color: "text-cyan-400", bg: "bg-cyan-400/10" },
-    { label: "Total Revenue", value: "$0", icon: Database, color: "text-emerald-400", bg: "bg-emerald-400/10" },
+    { label: "Total Revenue", value: "₦0", icon: Database, color: "text-emerald-400", bg: "bg-emerald-400/10" },
   ]);
 
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
@@ -45,7 +45,7 @@ export default function DashboardPage() {
         { label: "Total Customers", value: customers.count?.toString() || "0", icon: Users, color: "text-blue-400", bg: "bg-blue-400/10" },
         { label: "Measurements Recorded", value: measurements.count?.toString() || "0", icon: Ruler, color: "text-purple-400", bg: "bg-purple-400/10" },
         { label: "Active Orders", value: orders.data?.filter(o => o.status === 'In Progress').length.toString() || "0", icon: ShoppingBag, color: "text-cyan-400", bg: "bg-cyan-400/10" },
-        { label: "Total Revenue", value: `$${totalRevenue.toLocaleString()}`, icon: Database, color: "text-emerald-400", bg: "bg-emerald-400/10" },
+        { label: "Total Revenue", value: `₦${totalRevenue.toLocaleString()}`, icon: Database, color: "text-emerald-400", bg: "bg-emerald-400/10" },
       ]);
 
       if (orders.data) {
@@ -54,7 +54,7 @@ export default function DashboardPage() {
           client: o.customers?.full_name || 'Unknown',
           type: o.items?.[0]?.description || 'Custom Order',
           status: o.status,
-          price: `$${Number(o.total_amount).toLocaleString()}`,
+          price: `₦${Number(o.total_amount).toLocaleString()}`,
           date: new Date(o.created_at).toLocaleDateString()
         })));
       }
@@ -229,20 +229,6 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* System Status Mini Card */}
-          <div className="mt-4 p-6 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 border border-blue-500/10 relative overflow-hidden">
-            <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">System Integrity</h4>
-            <div className="flex items-center space-x-2">
-              <div className="h-1 flex-1 bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full w-[98%] bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.4)]" />
-              </div>
-              <span className="text-[10px] font-mono text-cyan-400">98%</span>
-            </div>
-            <p className="text-[9px] text-slate-600 mt-3 leading-relaxed">
-              All encryption modules active. Connection to central database secured.
-            </p>
-          </div>
         </div>
 
       </div>

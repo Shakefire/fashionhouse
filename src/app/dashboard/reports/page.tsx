@@ -66,7 +66,7 @@ export default function GenerateReportsPage() {
           "Customer": o.customers?.full_name || 'Unknown',
           "Date": new Date(o.created_at).toLocaleDateString(),
           "Status": o.status,
-          "Amount": `$${Number(o.total_amount).toLocaleString()}`
+          "Amount": `₦${Number(o.total_amount).toLocaleString()}`
         })) || [];
       } else if (reportType === "Customer Analysis") {
         const { data: raw } = await supabase.from('customers').select('full_name, orders(total_amount)');
@@ -76,7 +76,7 @@ export default function GenerateReportsPage() {
           return {
             "Client Name": c.full_name,
             "Total Orders": totalOrders,
-            "LTV (Spent)": `$${totalSpent.toLocaleString()}`,
+            "LTV (Spent)": `₦${totalSpent.toLocaleString()}`,
             "Loyalty Tier": totalOrders > 10 ? 'Platinum' : totalOrders > 5 ? 'Gold' : 'Silver'
           };
         }) || [];
@@ -87,7 +87,7 @@ export default function GenerateReportsPage() {
         data = res.data?.map((p: any) => ({
           "Date": new Date(p.created_at).toLocaleDateString(),
           "Order Ref": p.orders?.order_number || 'N/A',
-          "Amount": `$${Number(p.amount).toLocaleString()}`,
+          "Amount": `₦${Number(p.amount).toLocaleString()}`,
           "Method": p.method,
           "Status": p.status
         })) || [];
