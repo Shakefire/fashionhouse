@@ -106,6 +106,8 @@ export default function RegisterCustomerPage() {
                   </div>
                   <input
                     type="text"
+                    name="fullName"
+                    autoComplete="off"
                     placeholder="Enter full legal name"
                     value={formData.fullName}
                     onChange={(e) => setFormData({...formData, fullName: e.target.value})}
@@ -124,7 +126,9 @@ export default function RegisterCustomerPage() {
                   </div>
                   <input
                     type="tel"
-                    placeholder="+1 (555) 000-0000"
+                    name="phoneNumber"
+                    autoComplete="off"
+                    placeholder="+234 800 000 0000"
                     value={formData.phoneNumber}
                     onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})}
                     className="w-full bg-slate-900/40 border border-blue-500/20 rounded-xl py-4 pl-12 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500/50 transition-all"
@@ -143,6 +147,8 @@ export default function RegisterCustomerPage() {
                 </div>
                 <input
                   type="text"
+                  name="address"
+                  autoComplete="off"
                   placeholder="Street, City, State, ZIP Code"
                   value={formData.address}
                   onChange={(e) => setFormData({...formData, address: e.target.value})}
@@ -160,6 +166,8 @@ export default function RegisterCustomerPage() {
                   <FileText size={20} />
                 </div>
                 <textarea
+                  name="notes"
+                  autoComplete="off"
                   rows={4}
                   placeholder="Special preferences, allergies, or previous history..."
                   value={formData.notes}

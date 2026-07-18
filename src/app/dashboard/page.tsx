@@ -11,10 +11,13 @@ import {
   Plus,
   Search,
   ChevronRight,
-  Database
+  Database,
+  BellRing,
+  Clock3
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { loadNotifications, type AppNotification } from "@/utils/notifications";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -28,6 +31,11 @@ export default function DashboardPage() {
   ]);
 
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+
+  useEffect(() => {
+    setNotifications(loadNotifications());
+  }, []);
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -229,6 +237,39 @@ export default function DashboardPage() {
             ))}
           </div>
 
+          <div className="glass-effect rounded-2xl border border-blue-500/10 p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <BellRing size={18} className="text-cyan-400" />
+                <h4 className="font-semibold text-slate-100">Alerts & Reminders</h4>
+              </div>
+              <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-cyan-400">
+                {notifications.length} active
+              </span>
+            </div>
+
+            {notifications.length > 0 ? (
+              <div className="space-y-3">
+                {notifications.slice(0, 4).map((item) => (
+                  <div key={item.id} className="rounded-xl border border-blue-500/10 bg-slate-900/40 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-100">{item.title}</p>
+                        <p className="mt-1 text-xs text-slate-400">{item.message}</p>
+                      </div>
+                      <div className="rounded-full bg-blue-500/10 p-1.5 text-cyan-400">
+                        <Clock3 size={14} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-blue-500/10 bg-slate-900/20 p-4 text-center text-sm text-slate-500">
+                No reminders or updates yet.
+              </div>
+            )}
+          </div>
         </div>
 
       </div>

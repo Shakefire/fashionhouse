@@ -1,18 +1,21 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Ruler, Save, Trash2, User, Scissors, ChevronDown, CheckCircle2, AlertCircle } from "lucide-react";
+import { Ruler, Save, Trash2, User, Scissors, CheckCircle2, AlertCircle } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 
-const MEASUREMENT_OPTIONS = Array.from({ length: 33 }, (_, i) => i + 24);
-
 const FABRICS = [
-  { value: "silk", label: "Premium Silk" },
-  { value: "cotton", label: "Egyptian Cotton" },
-  { value: "wool", label: "Merino Wool" },
-  { value: "linen", label: "Pure Linen" },
-  { value: "velvet", label: "Velvet" },
+  { value: "Silk", label: "Premium Silk" },
+  { value: "Cotton", label: "Egyptian Cotton" },
+  { value: "Wool", label: "Merino Wool" },
+  { value: "Linen", label: "Pure Linen" },
+  { value: "Velvet", label: "Velvet" },
+  { value: "Lace", label: "Lace" },
+  { value: "Polyester", label: "Polyester" },
+  { value: "Gabardine", label: "Gabardine" },
+  { value: "Chiffon", label: "Chiffon" },
+  { value: "Ankara", label: "Ankara" },
 ];
 
 interface Measurements {
@@ -41,42 +44,46 @@ const INITIAL_STATE: Measurements = {
   inseam: "",
 };
 
-function MeasurementSelect({
+function MeasurementField({
   label,
   value,
   onChange,
+  min = 5,
+  max = 50,
 }: {
   label: string;
   value: string;
   onChange: (val: string) => void;
+  min?: number;
+  max?: number;
 }) {
+  const clampedValue = (raw: string) => {
+    if (!raw) return "";
+    const nextValue = Number(raw);
+    if (Number.isNaN(nextValue)) return "";
+    return String(Math.min(max, Math.max(min, nextValue)));
+  };
+
   return (
     <div className="flex items-center justify-between gap-4 py-3 border-b border-blue-500/5 group transition-all hover:border-cyan-500/10">
       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] group-hover:text-slate-300 transition-colors">
         {label}
       </label>
-      <div className="relative w-24 lg:w-32 shrink-0">
-        <select
+      <div className="w-full max-w-[220px]">
+        <input
+          type="number"
+          inputMode="decimal"
+          min={min}
+          max={max}
+          step="0.25"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={`w-full bg-slate-900/60 border rounded-xl py-2.5 px-4 text-sm font-bold transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500/30 appearance-none cursor-pointer text-center ${
+          onBlur={() => onChange(clampedValue(value))}
+          placeholder={`${min}-${max}`}
+          className={`w-full bg-slate-900/60 border rounded-xl py-2.5 px-3 text-sm font-bold transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500/30 ${
             value ? "text-cyan-400 border-cyan-500/40 shadow-[0_0_15px_rgba(34,211,238,0.15)] bg-slate-900" : "text-slate-500 border-blue-500/10 hover:border-blue-500/30"
           }`}
-        >
-          <option value="" className="bg-slate-900 text-slate-600">--</option>
-          {MEASUREMENT_OPTIONS.map((num) => (
-            <option
-              key={num}
-              value={num.toString()}
-              className="bg-slate-900 text-white"
-            >
-              {num}
-            </option>
-          ))}
-        </select>
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-600 group-hover:text-cyan-500/50 transition-colors">
-          <ChevronDown size={14} />
-        </div>
+        />
       </div>
     </div>
   );
@@ -89,9 +96,14 @@ export default function RecordMeasurementsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
+  const measurementsRef = useRef(measurements);
+  useEffect(() => {
+    measurementsRef.current = measurements;
+  });
+
   useEffect(() => {
     async function fetchCustomers() {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('customers')
         .select('id, full_name')
         .order('full_name');
@@ -99,6 +111,51 @@ export default function RecordMeasurementsPage() {
     }
     fetchCustomers();
   }, [supabase]);
+
+  useEffect(() => {
+    if (!measurements.customer) return;
+
+    // Don't overwrite values the user has already started typing.
+    const hasStartedTyping = Object.entries(measurementsRef.current).some(
+      ([key, value]) => key !== "customer" && value !== ""
+    );
+    if (hasStartedTyping) return;
+
+    let isMounted = true;
+
+    async function fetchMeasurements() {
+      const { data } = await supabase
+        .from('measurements')
+        .select('*')
+        .eq('customer_id', measurements.customer)
+        .maybeSingle();
+
+      if (!isMounted) return;
+
+      if (data) {
+        setMeasurements({
+          customer: measurements.customer,
+          fabricType: data.fabric_type || "",
+          bust: data.bust != null ? String(data.bust) : "",
+          waist: data.waist != null ? String(data.waist) : "",
+          hips: data.hips != null ? String(data.hips) : "",
+          shoulder: data.shoulder != null ? String(data.shoulder) : "",
+          length: data.length != null ? String(data.length) : "",
+          neck: data.neck != null ? String(data.neck) : "",
+          sleeve: data.sleeve != null ? String(data.sleeve) : "",
+          inseam: data.inseam != null ? String(data.inseam) : "",
+        });
+      } else {
+        setMeasurements({ ...INITIAL_STATE, customer: measurements.customer });
+      }
+    }
+
+    fetchMeasurements();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [measurements.customer, supabase]);
 
   const updateField = useCallback((key: keyof Measurements) => {
     return (val: string) => {
@@ -119,12 +176,11 @@ export default function RecordMeasurementsPage() {
       return;
     }
 
-    // Check if measurement already exists for this customer
     const { data: existing } = await supabase
       .from('measurements')
       .select('id')
       .eq('customer_id', measurements.customer)
-      .single();
+      .maybeSingle();
 
     let res;
     const payload = {
@@ -271,16 +327,16 @@ export default function RecordMeasurementsPage() {
             {/* Measurement Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 pt-4">
               <div className="space-y-6">
-                <MeasurementSelect label="Bust/Chest" value={measurements.bust} onChange={updateField("bust")} />
-                <MeasurementSelect label="Waist" value={measurements.waist} onChange={updateField("waist")} />
-                <MeasurementSelect label="Hips" value={measurements.hips} onChange={updateField("hips")} />
-                <MeasurementSelect label="Shoulder Width" value={measurements.shoulder} onChange={updateField("shoulder")} />
+                <MeasurementField label="Bust/Chest" value={measurements.bust} onChange={updateField("bust")} />
+                <MeasurementField label="Waist" value={measurements.waist} onChange={updateField("waist")} />
+                <MeasurementField label="Hips/Laps" value={measurements.hips} onChange={updateField("hips")} />
+                <MeasurementField label="Shoulder Width" value={measurements.shoulder} onChange={updateField("shoulder")} />
               </div>
               <div className="space-y-6">
-                <MeasurementSelect label="Dress/Shirt Length" value={measurements.length} onChange={updateField("length")} />
-                <MeasurementSelect label="Neck" value={measurements.neck} onChange={updateField("neck")} />
-                <MeasurementSelect label="Sleeve Length" value={measurements.sleeve} onChange={updateField("sleeve")} />
-                <MeasurementSelect label="Inseam Length" value={measurements.inseam} onChange={updateField("inseam")} />
+                <MeasurementField label="Dress/Shirt Length" value={measurements.length} onChange={updateField("length")} />
+                <MeasurementField label="Neck" value={measurements.neck} onChange={updateField("neck")} />
+                <MeasurementField label="Sleeve Length" value={measurements.sleeve} onChange={updateField("sleeve")} />
+                <MeasurementField label="Inseam Length" value={measurements.inseam} onChange={updateField("inseam")} />
               </div>
             </div>
 

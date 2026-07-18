@@ -22,6 +22,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import { addNotification, syncOrderReminders } from "@/utils/notifications";
 
 const FABRICS = [
   { value: "Premium Silk", label: "Premium Silk" },
@@ -63,7 +64,8 @@ export default function OrderManagementPage() {
     total_cost: "",
     amount_paid: "",
     balance_due: "",
-    status: "Pending" as any
+    status: "Pending" as any,
+    sendReminder: false
   });
 
   useEffect(() => {
@@ -94,6 +96,7 @@ export default function OrderManagementPage() {
         status: o.status
       }));
       setOrders(formattedOrders);
+      syncOrderReminders(formattedOrders);
     }
     if (customersRes.data) setDbCustomers(customersRes.data);
     setIsLoading(false);
@@ -126,6 +129,30 @@ export default function OrderManagementPage() {
     if (result.error) {
       setStatusMessage({ type: 'error', text: "Failed to save order. Please check inputs." });
     } else {
+      const createdOrderId = (() => {
+        const firstItem = (result.data as unknown as Array<{ id?: string }> | null | undefined)?.[0];
+        if (typeof firstItem?.id === "string") {
+          return firstItem.id;
+        }
+        return currentOrder.id || orderData.order_number;
+      })();
+      const customerName = dbCustomers.find((customer) => customer.id === currentOrder.customer_id)?.full_name || "a client";
+
+      if (!isEditing) {
+        addNotification({
+          key: `order-created-${createdOrderId}`,
+          type: "order",
+          title: "New order created",
+          message: `A new order for ${customerName} has been taken.`,
+          orderId: createdOrderId,
+          priority: "high",
+        });
+      }
+
+      if (currentOrder.sendReminder && currentOrder.deadline) {
+        syncOrderReminders([{ id: createdOrderId, order_number: orderData.order_number, deadline: currentOrder.deadline, status: currentOrder.status }]);
+      }
+
       setStatusMessage({ type: 'success', text: isEditing ? "Order updated successfully." : "New order commissioned successfully!" });
       setIsCreating(false);
       setIsEditing(false);
@@ -148,12 +175,13 @@ export default function OrderManagementPage() {
       total_cost: "",
       amount_paid: "",
       balance_due: "",
-      status: "Pending"
+      status: "Pending",
+      sendReminder: false
     });
   };
 
   const startEditing = (order: any) => {
-    setCurrentOrder(order);
+    setCurrentOrder({ ...order, sendReminder: false });
     setIsEditing(true);
     setIsCreating(true);
     setActiveMenu(null);
@@ -173,9 +201,33 @@ export default function OrderManagementPage() {
   };
 
   const updateOrderStatus = async (id: string, newStatus: string) => {
+    const currentStatus = orders.find((order) => order.id === id)?.status;
     const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', id);
     if (!error) {
       setOrders(orders.map(order => order.id === id ? { ...order, status: newStatus } : order));
+
+      if (currentStatus !== newStatus) {
+        const orderNumber = orders.find((order) => order.id === id)?.order_number || "this order";
+        const title = newStatus === "Completed"
+          ? "Order completed"
+          : newStatus === "Delivered"
+            ? "Order delivered"
+            : "Order status updated";
+        const message = newStatus === "Completed"
+          ? `Order ${orderNumber} has been marked completed.`
+          : newStatus === "Delivered"
+            ? `Order ${orderNumber} has been marked delivered.`
+            : `Order ${orderNumber} is now ${newStatus}.`;
+
+        addNotification({
+          key: `order-status-${id}-${newStatus}`,
+          type: "status",
+          title,
+          message,
+          orderId: id,
+          priority: newStatus === "Delivered" ? "high" : "normal",
+        });
+      }
     }
   };
 
@@ -618,6 +670,19 @@ export default function OrderManagementPage() {
                     className="w-full bg-slate-900/50 border border-blue-500/20 rounded-xl py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 text-xs sm:text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/30 transition-all resize-none"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2 rounded-xl border border-blue-500/10 bg-slate-900/30 p-3">
+                <label className="flex items-center gap-3 text-xs font-bold text-slate-300 uppercase tracking-widest">
+                  <input
+                    type="checkbox"
+                    checked={currentOrder.sendReminder}
+                    onChange={(e) => setCurrentOrder({ ...currentOrder, sendReminder: e.target.checked })}
+                    className="h-4 w-4 rounded border-blue-500/20 bg-slate-900 text-cyan-400 focus:ring-cyan-500/30"
+                  />
+                  <span>Send reminder alerts before the deadline</span>
+                </label>
+                <p className="text-[10px] text-slate-500">You will receive 48-hour and 24-hour reminders for this order.</p>
               </div>
 
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 sm:pt-4">
